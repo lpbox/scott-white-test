@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Linking,
   ScrollView,
@@ -11,7 +11,7 @@ import { ActivityIndicator, Appbar, Avatar, Text } from 'react-native-paper';
 import { useAppDispatch, useAppSelector } from '../../stores';
 import { selectPatientDetails } from '../../stores/reselects/patients.reselect';
 import { fetchPatientDetails } from '../../stores/slices/patient-details.slice';
-import { PatientAddressMap } from './components/PatientAddressMap/PatientAddressMap';
+import { PatientAddressMapDialog } from './components/PatientAddressMapDialog/PatientAddressMapDialog';
 
 const styles = StyleSheet.create({
   container: {
@@ -35,6 +35,12 @@ const styles = StyleSheet.create({
   contactInformationEmail: {
     marginBottom: 12,
   },
+  contactInformationAddress: {
+    marginTop: 12,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
   contactInformationPhone: {
     marginTop: 12,
     display: 'flex',
@@ -50,6 +56,7 @@ const styles = StyleSheet.create({
 });
 
 export const PatientDetails = ({ navigation, route }: any) => {
+  const [openMap, setOpenMap] = useState(false);
   const dispatch = useAppDispatch();
   const { patient, isLoading } = useAppSelector(selectPatientDetails);
 
@@ -59,6 +66,10 @@ export const PatientDetails = ({ navigation, route }: any) => {
 
   const handleGoBack = () => {
     navigation.goBack();
+  };
+
+  const handleToggleOpenMapStatus = () => {
+    setOpenMap(!openMap);
   };
 
   return (
@@ -89,10 +100,19 @@ export const PatientDetails = ({ navigation, route }: any) => {
               {patient.email}
             </Text>
 
-            <Text variant="titleLarge">{patient.address.street}</Text>
-            <Text variant="titleLarge">{patient.address.suite}</Text>
-            <Text variant="titleLarge">{patient.address.city}</Text>
-            <Text variant="titleLarge">{patient.address.zipcode}</Text>
+            <View style={styles.contactInformationAddress}>
+              <View>
+                <Text variant="titleLarge">{patient.address.street}</Text>
+                <Text variant="titleLarge">{patient.address.suite}</Text>
+                <Text variant="titleLarge">{patient.address.city}</Text>
+                <Text variant="titleLarge">{patient.address.zipcode}</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.contactInformationPhoneButton}
+                onPress={handleToggleOpenMapStatus}>
+                <FontAwesome size={20} name="search" />
+              </TouchableOpacity>
+            </View>
 
             <View style={styles.contactInformationPhone}>
               <Text variant="titleLarge">{patient.phone}</Text>
@@ -100,6 +120,15 @@ export const PatientDetails = ({ navigation, route }: any) => {
                 style={styles.contactInformationPhoneButton}
                 onPress={() => Linking.openURL(`tel:${patient.phone}`)}>
                 <FontAwesome size={20} name="phone" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.contactInformationPhone}>
+              <Text variant="titleLarge">{patient.website}</Text>
+              <TouchableOpacity
+                style={styles.contactInformationPhoneButton}
+                onPress={() => Linking.openURL(patient.website)}>
+                <FontAwesome size={20} name="link" />
               </TouchableOpacity>
             </View>
           </View>
@@ -114,7 +143,12 @@ export const PatientDetails = ({ navigation, route }: any) => {
             <Text variant="titleLarge">{patient.company.catchPhrase}</Text>
             <Text variant="titleLarge">{patient.company.bs}</Text>
           </View>
-          <PatientAddressMap patient={patient} />
+          {openMap && (
+            <PatientAddressMapDialog
+              patient={patient}
+              onDismiss={handleToggleOpenMapStatus}
+            />
+          )}
         </ScrollView>
       )}
       {isLoading || (!patient && <ActivityIndicator />)}
